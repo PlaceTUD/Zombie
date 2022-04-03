@@ -1,0 +1,10 @@
+cnc_websocket: wss://placetud.yanick.gay/api/ws
+map_url: https://placetud.yanick.gay/maps/
+
+accounts: 
+  - 
+    username: username
+    password: password
+  - 
+    username: another_username
+    password: another_password

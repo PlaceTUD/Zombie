@@ -18,11 +18,20 @@ For now, just download the script and run it with Python. More easy installation
 
 ## Usage
 
+Configure the bot with the `config.yml` file.
+
+### Run on the host directly
+
 ```bash
-python PlaceNL.py -u "USERNAME" "PASSWORD"
+python PlaceNL.py
 ```
 
-The bot supports multiple users:
+### Run in a Docker container
+
 ```bash
-python PlaceNL.py -u "USERNAME1" "PASSWORD1" -u "USERNAME2" "PASSWORD2"
+docker-compose up -d
 ```
+
+### The bot supports multiple users
+
+Just add more credentials to the config file.

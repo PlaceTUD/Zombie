@@ -46,17 +46,30 @@ import matplotlib
 import matplotlib.pyplot as plt
 from rich.logging import RichHandler
 
+import yaml
+
 __version__ = '1'
 
 logger = logging.getLogger()
 logging.basicConfig(format=r"[%(name)s] %(message)s", handlers=[RichHandler()])
+
+with open("config.yml", "r") as stream:
+    try:
+        config = yaml.safe_load(stream)
+        CNC_WEBSOCKET = config["cnc_websocket"]
+        MAP_URL = config["map_url"]
+        ACCOUNTS = []
+        for account in config["accounts"]:
+            ACCOUNTS.append((account["username"], account["password"]))
+    except yaml.YAMLError as exc:
+        logger.error("Error loading config.yml: %s", exc)
+        exit(1)
 
 REDDIT_LOGIN_GET = "https://www.reddit.com/login/?experiment_d2x_2020ify_buttons=enabled&experiment_d2x_sso_login_link=enabled&experiment_d2x_google_sso_gis_parity=enabled&experiment_d2x_onboarding=enabled"
 REDDIT_LOGIN_POST = "https://www.reddit.com/login"
 REDDIT_PLACE_URL = "https://www.reddit.com/r/place/"
 REDDIT_PLACE_SET_PIXEL_URL = "https://gql-realtime-2.reddit.com/query"
 PLACE_WEBSOCKET = "wss://gql-realtime-2.reddit.com/query"
-CNC_WEBSOCKET = "wss://placenl.noahvdaa.me/api/ws"
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:98.0) Gecko/20100101 Firefox/98.0"
 
 GRAPHQL_CANVAS_QUERY = """
@@ -184,7 +197,7 @@ class CNCOrderClient:
                 continue
 
             if data['type'] == 'map':
-                map_url = f"https://placenl.noahvdaa.me/maps/{data['data']}"
+                map_url = MAP_URL + data['data']
                 reason = data.get('reason')
                 self.logger.info("Loading new map (reason: %s)", reason if reason else "connected to server")
                 self.logger.info("Map URL: %s", map_url)
@@ -563,10 +576,6 @@ async def on_request_start(session, ctx, params):
 
 async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-u', '--user', nargs=2, action="append",
-        help="Reddit username and password. Use this option multiple times to run with multiple users."
-    )
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help="Enable verbose output, use multiple times to increase verbosity level.")
 
@@ -597,7 +606,7 @@ async def main():
 
                 tasks = [cnc_task]
 
-                for username, password in args.user:
+                for username, password in ACCOUNTS:
                     tasks.append(reddit_client_task(trace_config, cnc_client, username, password))
 
                 await asyncio.gather(*tasks)
