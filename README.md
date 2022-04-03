@@ -12,18 +12,20 @@ and automatically place pixels at the desired locations.
 - Rich
 - aiohttp
 
-## Installation
+## Installation & updating to a new version
 
-For now, just download the script and run it with Python. More easy installation methods will come soon.
+```bash
+pip install --force https://github.com/PlaceTUD/rPlace2022
+```
 
-## Usage
+## Configure
 
 Configure the bot with the `config.yml` file.
 
 ### Run on the host directly
 
 ```bash
-python PlaceNL.py
+PlaceNL
 ```
 
 ### Run in a Docker container
