@@ -15,7 +15,7 @@ and automatically place pixels at the desired locations.
 ## Installation & updating to a new version
 
 ```bash
-pip install --force https://github.com/PlaceTUD/rPlace2022
+pip install --force git+https://github.com/PlaceTUD/Zombie.git
 ```
 You will need to add the `config.yml` file manually.
 

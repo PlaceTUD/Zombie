@@ -49,7 +49,7 @@ from rich.logging import RichHandler
 
 import yaml
 
-__version__ = '1'
+__version__ = '2'
 
 logger = logging.getLogger()
 logging.basicConfig(format=r"[%(name)s] %(message)s", handlers=[RichHandler()])
@@ -263,7 +263,7 @@ class CNCOrderClient:
             return
 
         await self.ws.send_str(json.dumps({"type": "placepixel", "x": col, "y": row, "color": color}))
-        self.logger.info("Notified CNC server of drawn pixel (%d, %d), color: %d.", row, col, color)
+        self.logger.info("Notified CNC server of drawn pixel (%d, %d), color: %d.", col, row, color)
 
 
 class RedditPlaceClient:
@@ -502,8 +502,6 @@ class RedditPlaceClient:
             if not result:
                 return False, 60.0
 
-        self.logger.info("Attempting to place a pixel at (%d, %d) with color %d...", row, col, color)
-
         headers = {
             'Accept': '*/*',
             'Connection': 'close',
@@ -545,6 +543,9 @@ class RedditPlaceClient:
             },
             'query': SET_PIXEL_QUERY
         }
+
+        self.logger.info("Attempting to place a pixel at (%d, %d) (canvas: %d), with color %d...", col, row,
+                         canvas_index, color)
 
         # Create a new session without any existing cookies
         async with aiohttp.ClientSession() as new_session:
