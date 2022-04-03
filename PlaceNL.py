@@ -55,6 +55,15 @@ logger = logging.getLogger()
 logging.basicConfig(format=r"[%(name)s] %(message)s", handlers=[RichHandler()])
 
 with open("config.yml", "r") as stream:
+    # if file is empty
+    if stream.read() == '':
+        print("config.yml is new, please fill it with your credentials")
+        with open("defaultConfig.yml", "r") as defaultStream:
+            with open("config.yml", "w") as newConfig:
+                newConfig.write(defaultStream.read())
+        exit()
+
+with open("config.yml", "r") as stream:
     try:
         config = yaml.safe_load(stream)
         CNC_WEBSOCKET = config["cnc_websocket"]

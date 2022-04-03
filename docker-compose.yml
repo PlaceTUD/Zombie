@@ -3,3 +3,5 @@ services:
   soldaten_1:
     build: .
     restart: unless-stopped
+    volumes:
+      - ./testConfig.yml:/config.yml

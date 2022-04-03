@@ -1,5 +1,5 @@
-cnc_websocket: wss://placetud.yanick.gay/api/ws
-map_url: https://placetud.yanick.gay/maps/
+cnc_websocket: wss://placetud-headless.yanick.gay/api/ws
+map_url: https://placetud-headless.yanick.gay/maps/
 
 accounts: 
   - 

@@ -17,23 +17,26 @@ and automatically place pixels at the desired locations.
 ```bash
 pip install --force https://github.com/PlaceTUD/rPlace2022
 ```
+You will need to add the `config.yml` file manually.
 
 ## Configure
 
 Configure the bot with the `config.yml` file.
 
-### Run on the host directly
+## Manual Run on the host directly
 
 ```bash
 PlaceNL
 ```
 
-### Run in a Docker container
+## Run in a Docker container
+
+Create an empty config file and set it in the `docker-compose.yml` file.
 
 ```bash
 docker-compose up -d
 ```
 
-### The bot supports multiple users
+## The bot supports multiple users
 
 Just add more credentials to the config file.
