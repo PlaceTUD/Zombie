@@ -588,6 +588,7 @@ class RedditPlaceClient:
                         next_available = float(data['data']['act']['data'][0]['data']['nextAvailablePixelTimestamp'])
                         next_dt = datetime.fromtimestamp(next_available / 1000)
                         delta = next_dt - datetime.now()
+                        delta += timedelta(seconds=(random.random() * 10))
 
                         self.logger.info("Success! Next pixel will be set at %s (%d seconds)",
                                          next_dt, delta.total_seconds())
