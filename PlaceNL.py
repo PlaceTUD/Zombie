@@ -205,7 +205,7 @@ class CNCOrderClient:
 
         asyncio.get_running_loop().create_task(self.ping())
 
-    async def receive_orders(self, new_map_callback = None):
+    async def receive_orders(self, new_map_callback=None):
         if not self.ws:
             return
 
@@ -229,7 +229,7 @@ class CNCOrderClient:
                 if new_map_callback:
                     new_map_callback(order_map)
 
-    async def load_map(self, map_url):
+    async def load_map(self, map_url) -> Optional[numpy.ndarray]:
         async with self.session.get(map_url) as resp:
             if resp.status != 200:
                 text = await resp.text()
@@ -267,7 +267,7 @@ class CNCOrderClient:
 
 
 class RedditPlaceClient:
-    def __init__(self, session, username, password, user_agent=None):
+    def __init__(self, session, username, password, user_agent=None, debug=False):
         self.session = session
         self.username = username
         self.password = password
@@ -278,8 +278,9 @@ class RedditPlaceClient:
         self.current_canvas = None
 
         self.logger = logging.getLogger(f'PlaceNL.reddit.{username}')
+        self.debug = debug
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> RedditPlaceClient:
         self.logger.info("Logging in reddit user %s...", self.username)
         success = await self.login()
 
@@ -361,6 +362,12 @@ class RedditPlaceClient:
 
             data = await resp.text()
 
+            if self.debug:
+                fname = f"place_access_token_{self.username}.html"
+                logger.debug("Writing HTML to %s", fname)
+                with open(fname, "w") as o:
+                    o.write(data)
+
             access_token_matches = access_token_regexp.search(data)
             expires_in_matches = expires_in_regexp.search(data)
 
@@ -377,7 +384,7 @@ class RedditPlaceClient:
 
             return access_token, expires_in
 
-    async def refresh_access_token(self):
+    async def refresh_access_token(self) -> bool:
         result = await self.scrape_access_token()
         if not result:
             self.logger.error("Could not refresh access token!")
@@ -461,23 +468,26 @@ class RedditPlaceClient:
                         return canvas
 
     async def load_full_map(self):
-        canvas1 = await self.load_canvas(0)
-        canvas2 = await self.load_canvas(1)
-        canvas3 = await self.load_canvas(2)
-        canvas4 = await self.load_canvas(3)
+        try:
+            canvas1 = await self.load_canvas(0)
+            canvas2 = await self.load_canvas(1)
+            canvas3 = await self.load_canvas(2)
+            canvas4 = await self.load_canvas(3)
 
-        if canvas1 is not None and canvas2 is not None and canvas3 is not None and canvas4 is not None:
-            top = numpy.hstack([canvas1, canvas2])
-            bottom = numpy.hstack([canvas3, canvas4])
-            self.current_canvas = numpy.vstack([top, bottom])
+            if canvas1 is not None and canvas2 is not None and canvas3 is not None and canvas4 is not None:
+                top = numpy.hstack([canvas1, canvas2])
+                bottom = numpy.hstack([canvas3, canvas4])
+                self.current_canvas = numpy.vstack([top, bottom])
 
-            self.logger.info("Loaded full canvas (shape: %s, dtype: %s)",
-                             self.current_canvas.shape, self.current_canvas.dtype)
+                self.logger.info("Loaded full canvas (shape: %s, dtype: %s)",
+                                 self.current_canvas.shape, self.current_canvas.dtype)
+        except aiohttp.ClientError:
+            logger.exception("Could not obtain current canvas!")
 
-    def get_pixels_to_update(self, order_map):
+    def get_pixels_to_update(self, order_map) -> list:
         if self.current_canvas is None:
             self.logger.warning("Current canvas not yet loaded, can't figure out pending pixels...")
-            return
+            return []
 
         to_update = []
 
@@ -602,6 +612,10 @@ class MainRunner:
 
         self.new_pixels_event = asyncio.Event()
         self.pixels_to_signal = deque()
+        self.debug = False
+
+    def set_debug(self):
+        self.debug = True
 
     async def cnc_updater(self):
         while True:
@@ -627,7 +641,7 @@ class MainRunner:
 
     async def reddit_client(self, username, password, user_agent=None):
         async with aiohttp.ClientSession(trace_configs=[self.trace_config]) as session:
-            async with RedditPlaceClient(session, username, password, user_agent) as place_client:
+            async with RedditPlaceClient(session, username, password, user_agent, self.debug) as place_client:
                 delay = 0
 
                 while True:
@@ -666,7 +680,10 @@ async def main():
     logging.getLogger().setLevel(logging.INFO)
     logging.getLogger('PIL').setLevel(logging.INFO)
 
+    runner = MainRunner()
+
     if args.verbose > 0:
+        runner.set_debug()
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger('aiohttp.client').setLevel(logging.INFO)
 
@@ -675,7 +692,6 @@ async def main():
         asyncio.get_running_loop().set_debug(True)
         logging.getLogger('aiohttp.client').setLevel(logging.DEBUG)
 
-    runner = MainRunner()
     tasks = [asyncio.create_task(runner.cnc_updater())]
 
     # Wait a few seconds before starting reddit clients to make sure C&C data has downloaded
